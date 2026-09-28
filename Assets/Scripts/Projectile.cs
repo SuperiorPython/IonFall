@@ -13,7 +13,9 @@ public class Projectile : MonoBehaviour
 
     [Header("Combat")]
     [SerializeField] private float damage = 10f;
-    [SerializeField] private LayerMask hitMask; // set this to your "Enemy" layer in the Inspector
+
+    [Header("References")]
+    [SerializeField] private PlayAreaBounds playAreaBounds; // optional — leave empty to disable the despawn check
 
     private Vector2 direction;
 
@@ -33,22 +35,21 @@ public class Projectile : MonoBehaviour
     private void Update()
     {
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
+
+        if (playAreaBounds != null && playAreaBounds.IsOutside(transform.position))
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Only react to objects on the enemy layer, so this doesn't accidentally
-        // hit the dome, the turret, or other projectiles.
-        if (((1 << other.gameObject.layer) & hitMask) == 0) return;
-
-        // EnemyHealth doesn't exist yet (that's Phase 2) — this call is here
-        // so the wiring is correct once it does. For now it'll just no-op if missing.
+        // Detect enemies by component rather than a layer mask — simpler and
+        // avoids a silent no-op if a layer was never configured in the Inspector.
         var enemyHealth = other.GetComponent<EnemyHealth>();
-        if (enemyHealth != null)
-        {
-            enemyHealth.TakeDamage(damage);
-        }
+        if (enemyHealth == null) return; // not an enemy (dome, other projectiles, etc.) — ignore
 
+        enemyHealth.TakeDamage(damage);
         Destroy(gameObject);
     }
 }

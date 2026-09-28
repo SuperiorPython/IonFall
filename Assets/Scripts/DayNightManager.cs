@@ -70,6 +70,7 @@ public class DayNightManager : MonoBehaviour
     {
         CurrentPhase = Phase.Night;
         PhaseTimeRemaining = nightDuration;
+        Time.timeScale = 1f; // defensive — should already be 1, but night should never be paused
 
         enemySpawner?.StartSpawning(CurrentDay);
         OnNightStarted?.Invoke(CurrentDay);
@@ -79,8 +80,22 @@ public class DayNightManager : MonoBehaviour
     {
         CurrentPhase = Phase.Day;
         PhaseTimeRemaining = dayDuration;
+        Time.timeScale = 0f; // freeze gameplay until the player confirms they're ready
 
         enemySpawner?.StopSpawning();
         OnDayStarted?.Invoke(CurrentDay);
     }
+
+    /// <summary>
+    /// Called by the shop UI's "Ready for Night" button. Unpauses gameplay,
+    /// at which point the day timer (already set to dayDuration in BeginDay)
+    /// starts counting down toward night for real.
+    /// </summary>
+    public void ConfirmReadyForNight()
+    {
+        if (CurrentPhase != Phase.Day) return;
+        Time.timeScale = 1f;
+    }
+
+    public bool IsWaitingToConfirm => CurrentPhase == Phase.Day && Time.timeScale == 0f;
 }

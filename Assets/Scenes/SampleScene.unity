@@ -132,8 +132,13 @@ GameObject:
   m_Component:
   - component: {fileID: 2712416}
   - component: {fileID: 2712415}
+  - component: {fileID: 2712418}
+  - component: {fileID: 2712417}
+  - component: {fileID: 2712419}
+  - component: {fileID: 2712420}
+  - component: {fileID: 2712421}
   m_Layer: 0
-  m_Name: IonStuff
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -159,6 +164,149 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2712414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2712417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdf019c93fb3a543ad1a2e949bc0d3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2712418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 478d3b1bea85c814c9be66e8f31be977, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ionsPerTick: 2
+  tickInterval: 1
+  ionManager: {fileID: 2712415}
+  dayNightManager: {fileID: 1696620661}
+--- !u!114 &2712419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f546810cae3d2b3468b3d4ba516c89a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ionManager: {fileID: 2712415}
+  turretShoot: {fileID: 1293487118}
+  domeHealth: {fileID: 1781554366}
+  ionMiner: {fileID: 2712418}
+  fireRateUpgrade:
+    label: Fire Rate
+    level: 0
+    baseCost: 10
+    costGrowth: 1.5
+    effectAmount: 1
+  maxIntegrityUpgrade:
+    label: Max Integrity
+    level: 0
+    baseCost: 15
+    costGrowth: 1.5
+    effectAmount: 20
+  miningRateUpgrade:
+    label: Mining Rate
+    level: 0
+    baseCost: 12
+    costGrowth: 1.5
+    effectAmount: 1
+--- !u!114 &2712420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81fff101e7374014aa320685a3e5ac50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardCost: 20
+  repairAmount: 30
+  useCardKey: 114
+  ionManager: {fileID: 2712415}
+  domeHealth: {fileID: 1781554366}
+--- !u!114 &2712421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aca316bb5b0bd0f4aabe3a3307dd6477, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dayNightManager: {fileID: 1696620661}
+  ionManager: {fileID: 2712415}
+  upgradeSystem: {fileID: 2712419}
+  repairCardSystem: {fileID: 2712420}
+--- !u!1 &437752685
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 437752687}
+  - component: {fileID: 437752686}
+  m_Layer: 0
+  m_Name: PlayingAreaBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &437752686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437752685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 730f888d2ad757d488f844ab755b4848, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minX: -11
+  maxX: 11
+  minY: -6
+  maxY: 6
+--- !u!4 &437752687
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437752685}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -343,6 +491,51 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &803231297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 803231299}
+  - component: {fileID: 803231298}
+  m_Layer: 0
+  m_Name: GameBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &803231298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803231297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d676ba247223c14c976638be814ece7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundY: -0.5
+--- !u!4 &803231299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803231297}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1251610252
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,6 +617,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationOffset: -90
   targetCamera: {fileID: 0}
+  gameBounds: {fileID: 803231298}
 --- !u!114 &1293487118
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -439,10 +633,12 @@ MonoBehaviour:
   projectilePrefab: {fileID: 3277014832206156217, guid: f05ba64dc0eda7548ab7371f96e8938c, type: 3}
   firePoint: {fileID: 1251610253}
   fireRate: 6
+  upgradeSystem: {fileID: 0}
   maxHeat: 100
   heatPerShot: 8
   coolRate: 25
   overheatCooldown: 1.5
+  dayNightManager: {fileID: 1696620661}
 --- !u!114 &1293487119
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -527,6 +723,7 @@ GameObject:
   - component: {fileID: 1781554368}
   - component: {fileID: 1781554367}
   - component: {fileID: 1781554366}
+  - component: {fileID: 1781554369}
   m_Layer: 0
   m_Name: Dome
   m_TagString: Dome
@@ -616,6 +813,18 @@ Transform:
   - {fileID: 1293487116}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1781554369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1781554365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec796118a703a45419fc16b9d9f4f289, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2146036439
 GameObject:
   m_ObjectHideFlags: 0
@@ -626,6 +835,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2146036441}
   - component: {fileID: 2146036440}
+  - component: {fileID: 2146036442}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -650,6 +860,8 @@ MonoBehaviour:
   spawnRadius: 12
   intervalReductionPerNight: 0.15
   minSpawnInterval: 0.4
+  gameBounds: {fileID: 803231298}
+  dayNightManager: {fileID: 0}
 --- !u!4 &2146036441
 Transform:
   m_ObjectHideFlags: 0
@@ -665,6 +877,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2146036442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146036439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d37c8890b5d931049b52e7a088b71e50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dayDuration: 20
+  nightDuration: 30
+  startInDay: 1
+  enemySpawner: {fileID: 2146036440}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -674,3 +902,5 @@ SceneRoots:
   - {fileID: 2146036441}
   - {fileID: 1696620662}
   - {fileID: 2712416}
+  - {fileID: 803231299}
+  - {fileID: 437752687}

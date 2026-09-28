@@ -18,6 +18,10 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float intervalReductionPerNight = 0.15f;
     [SerializeField] private float minSpawnInterval = 0.4f;
 
+    [Header("References")]
+    [SerializeField] private GameBounds gameBounds; // optional — leave empty to disable the ground clamp
+    [SerializeField] private DayNightManager dayNightManager; // optional — used as a race-condition safety net
+
     private bool isSpawning;
     private float spawnTimer;
     private int currentNight = 1;
@@ -43,6 +47,15 @@ public class EnemySpawner : MonoBehaviour
         spawnTimer -= Time.deltaTime;
         if (spawnTimer <= 0f)
         {
+            // Double-check phase directly (not just the isSpawning flag) — Update()
+            // execution order between scripts isn't guaranteed, so this closes a
+            // race where StopSpawning() lands one frame too late.
+            if (dayNightManager != null && dayNightManager.CurrentPhase != DayNightManager.Phase.Night)
+            {
+                isSpawning = false;
+                return;
+            }
+
             SpawnEnemy();
             spawnTimer = CurrentInterval();
         }
@@ -73,6 +86,14 @@ public class EnemySpawner : MonoBehaviour
         if (enemyPrefab == null || domeTransform == null) return;
 
         Vector2 spawnPos = (Vector2)domeTransform.position + Random.insideUnitCircle.normalized * spawnRadius;
+
+        // If this landed below ground level, reflect it back above the line
+        // rather than rejecting/resampling — keeps things simple and always succeeds.
+        if (gameBounds != null && spawnPos.y < gameBounds.GroundY)
+        {
+            spawnPos.y = gameBounds.GroundY + (gameBounds.GroundY - spawnPos.y);
+        }
+
         Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 }

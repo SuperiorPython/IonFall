@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Repair cards are purchased during Day (like upgrades) but can be USED any time,
+/// Repair cards are purchased during Day (via DayScreenUI) but can be USED any time,
 /// including mid-night when the dome is under pressure — that's the whole point,
 /// per the design doc: a strategic emergency resource, not passive healing.
 /// </summary>
@@ -15,43 +15,20 @@ public class RepairCardSystem : MonoBehaviour
     [Header("References")]
     [SerializeField] private IonManager ionManager;
     [SerializeField] private DomeHealth domeHealth;
-    [SerializeField] private DayNightManager dayNightManager;
 
     public int CardsOwned { get; private set; }
-
-    private bool isDayPhase;
-
-    private void OnEnable()
-    {
-        if (dayNightManager != null)
-        {
-            dayNightManager.OnDayStarted += HandleDayStarted;
-            dayNightManager.OnNightStarted += HandleNightStarted;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (dayNightManager != null)
-        {
-            dayNightManager.OnDayStarted -= HandleDayStarted;
-            dayNightManager.OnNightStarted -= HandleNightStarted;
-        }
-    }
-
-    private void HandleDayStarted(int day) => isDayPhase = true;
-    private void HandleNightStarted(int night) => isDayPhase = false;
+    public int CardCost => cardCost;
 
     private void Update()
     {
-        // Using a card is allowed in any phase — buying is Day-only, handled in OnGUI.
+        // Using a card is allowed in any phase, including mid-night.
         if (Input.GetKeyDown(useCardKey))
         {
             UseCard();
         }
     }
 
-    private void BuyCard()
+    public void BuyCard()
     {
         if (ionManager == null || !ionManager.Spend(cardCost)) return;
         CardsOwned++;
@@ -59,26 +36,30 @@ public class RepairCardSystem : MonoBehaviour
 
     private void UseCard()
     {
-        if (CardsOwned <= 0) return;
-        if (domeHealth == null || domeHealth.IsDestroyed) return;
+        if (CardsOwned <= 0)
+        {
+            Debug.Log("Repair card use failed: no cards owned. Buy one during the Day screen first.");
+            return;
+        }
+        if (domeHealth == null)
+        {
+            Debug.LogWarning("Repair card use failed: RepairCardSystem has no DomeHealth assigned in the Inspector.");
+            return;
+        }
+        if (domeHealth.IsDestroyed)
+        {
+            Debug.Log("Repair card use failed: dome is already destroyed.");
+            return;
+        }
 
         CardsOwned--;
         domeHealth.Repair(repairAmount);
+        Debug.Log($"Repair card used — healed {repairAmount}. Cards remaining: {CardsOwned}");
     }
 
-    // --- Temporary OnGUI panel, same disposable pattern as UpgradeSystem ---
+    // Always-visible reminder that a card can be used, regardless of phase or shop screen.
     private void OnGUI()
     {
         GUI.Label(new Rect(300, 20, 260, 24), $"Repair Cards: {CardsOwned}  (Press {useCardKey} to use)");
-
-        if (!isDayPhase) return;
-
-        bool canAfford = ionManager != null && ionManager.CanAfford(cardCost);
-        GUI.enabled = canAfford;
-        if (GUI.Button(new Rect(300, 50, 220, 30), $"Buy Repair Card — {cardCost} ions"))
-        {
-            BuyCard();
-        }
-        GUI.enabled = true;
     }
 }
