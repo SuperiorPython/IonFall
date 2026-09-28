@@ -13,11 +13,19 @@ public class TurretShoot : MonoBehaviour
     [SerializeField] private Transform firePoint; // empty child at the barrel tip
     [SerializeField] private float fireRate = 6f; // shots per second
 
+    [Header("UI Guard")]
+    [SerializeField] private UpgradeSystem upgradeSystem; // optional — prevents firing when clicking shop buttons
+
     [Header("Heat")]
     [SerializeField] private float maxHeat = 100f;
     [SerializeField] private float heatPerShot = 8f;
     [SerializeField] private float coolRate = 25f; // heat lost per second when not firing
     [SerializeField] private float overheatCooldown = 1.5f; // forced pause once maxed out
+
+    [Header("References")]
+    [SerializeField] private DayNightManager dayNightManager;
+
+    private bool isNightPhase;
 
     private float currentHeat;
     private bool isOverheated;
@@ -37,6 +45,33 @@ public class TurretShoot : MonoBehaviour
         turret = GetComponent<Turret>();
     }
 
+    private void OnEnable()
+    {
+        if (dayNightManager != null)
+        {
+            dayNightManager.OnNightStarted += HandleNightStarted;
+            dayNightManager.OnDayStarted += HandleDayStarted;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (dayNightManager != null)
+        {
+            dayNightManager.OnNightStarted -= HandleNightStarted;
+            dayNightManager.OnDayStarted -= HandleDayStarted;
+        }
+    }
+
+    private void HandleNightStarted(int night) => isNightPhase = true;
+    private void HandleDayStarted(int day) => isNightPhase = false;
+
+    /// <summary>Called by UpgradeSystem when the player buys a fire rate upgrade.</summary>
+    public void IncreaseFireRate(float amount)
+    {
+        fireRate += amount;
+    }
+
     private void Update()
     {
         HandleOverheatState();
@@ -48,6 +83,7 @@ public class TurretShoot : MonoBehaviour
     {
         fireCooldownTimer -= Time.deltaTime;
 
+        if (!isNightPhase) return;
         if (isOverheated) return;
         if (!Input.GetMouseButton(0)) return; // left click held to fire
         if (fireCooldownTimer > 0f) return;

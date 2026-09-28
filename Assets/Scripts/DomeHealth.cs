@@ -46,6 +46,17 @@ public class DomeHealth : MonoBehaviour
         OnIntegrityChanged?.Invoke(currentIntegrity, maxIntegrity);
     }
 
+    /// <summary>Called by UpgradeSystem when the player buys a max integrity upgrade.
+    /// Also heals by the same amount, so buying this feels immediately useful mid-run.</summary>
+    public void IncreaseMaxIntegrity(float amount)
+    {
+        if (amount <= 0f) return;
+
+        maxIntegrity += amount;
+        currentIntegrity += amount;
+        OnIntegrityChanged?.Invoke(currentIntegrity, maxIntegrity);
+    }
+
     private void Die()
     {
         OnDomeDestroyed?.Invoke();
