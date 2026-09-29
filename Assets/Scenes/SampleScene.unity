@@ -140,6 +140,7 @@ GameObject:
   - component: {fileID: 2712423}
   - component: {fileID: 2712422}
   - component: {fileID: 2712424}
+  - component: {fileID: 2712425}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -312,6 +313,21 @@ MonoBehaviour:
   dayNightManager: {fileID: 1696620661}
   gameTitle: IONFALL
   subtitle: Survive the fall.
+--- !u!114 &2712425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0911813040129034db98cf35dcb78f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healthGrowthPerNight: 0.15
+  damageGrowthPerNight: 0.1
+  speedGrowthPerNight: 0.03
 --- !u!1 &437752685
 GameObject:
   m_ObjectHideFlags: 0
@@ -899,13 +915,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 921b487032be91743bbc826665195235, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyPrefab: {fileID: 2604876847516851333, guid: 23c869589a57d994d91f6069b6473e1a, type: 3}
+  enemyPrefabs: []
   spawnInterval: 2
   spawnRadius: 12
   intervalReductionPerNight: 0.15
   minSpawnInterval: 0.4
   gameBounds: {fileID: 803231298}
-  dayNightManager: {fileID: 0}
+  dayNightManager: {fileID: 1696620661}
+  difficultyCurve: {fileID: 2712425}
 --- !u!4 &2146036441
 Transform:
   m_ObjectHideFlags: 0

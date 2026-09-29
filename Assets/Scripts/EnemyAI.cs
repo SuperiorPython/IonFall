@@ -79,6 +79,18 @@ public class EnemyAI : MonoBehaviour
         currentState = State.Retreating;
     }
 
+    /// <summary>Called by EnemySpawner right after Instantiate, based on the current night's difficulty.</summary>
+    public void ScaleDamage(float multiplier)
+    {
+        damagePerHit *= multiplier;
+    }
+
+    /// <summary>Called by EnemySpawner right after Instantiate, based on the current night's difficulty.</summary>
+    public void ScaleSpeed(float multiplier)
+    {
+        moveSpeed *= multiplier;
+    }
+
     private void Update()
     {
         switch (currentState)

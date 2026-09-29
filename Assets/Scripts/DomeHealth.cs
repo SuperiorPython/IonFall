@@ -11,8 +11,9 @@ public class DomeHealth : MonoBehaviour
     [SerializeField] private float maxIntegrity = 100f;
     [SerializeField] private float currentIntegrity;
 
-    // Other systems (UI, game-over logic, etc.) can subscribe to these
-    // instead of polling this script every frame.
+    [Header("References")]
+    [SerializeField] private DayNightManager dayNightManager; // optional — needed for Emergency Shield's per-night reset
+
     public event Action<float, float> OnIntegrityChanged; // (current, max)
     public event Action OnDomeDestroyed;
 
@@ -20,16 +21,79 @@ public class DomeHealth : MonoBehaviour
     public float MaxIntegrity => maxIntegrity;
     public bool IsDestroyed => currentIntegrity <= 0f;
 
+    // --- Upgrade-driven state ---
+    private float damageResistance = 0f; // 0-1, fraction of incoming damage blocked
+    private float regenPerSecond = 0f;
+    private bool hasEmergencyShield = false;
+    private bool shieldChargeAvailable = false;
+    private bool hasAdaptiveArmor = false;
+    private float adaptiveArmorMaxBonus = 0f; // extra resistance at 0 integrity
+
     private void Awake()
     {
         currentIntegrity = maxIntegrity;
+    }
+
+    private void OnEnable()
+    {
+        if (dayNightManager != null)
+        {
+            dayNightManager.OnNightStarted += HandleNightStarted;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (dayNightManager != null)
+        {
+            dayNightManager.OnNightStarted -= HandleNightStarted;
+        }
+    }
+
+    private void HandleNightStarted(int night)
+    {
+        if (hasEmergencyShield)
+        {
+            shieldChargeAvailable = true; // recharge at the start of every night
+        }
+    }
+
+    private void Update()
+    {
+        if (regenPerSecond > 0f && !IsDestroyed)
+        {
+            Repair(regenPerSecond * Time.deltaTime);
+        }
+
+        // TEMPORARY test hook — press Space to simulate 10 damage for quick testing.
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TakeDamage(10f);
+        }
     }
 
     public void TakeDamage(float amount)
     {
         if (IsDestroyed || amount <= 0f) return;
 
-        currentIntegrity = Mathf.Max(0f, currentIntegrity - amount);
+        if (hasEmergencyShield && shieldChargeAvailable)
+        {
+            shieldChargeAvailable = false;
+            Debug.Log("Emergency Shield absorbed a hit!");
+            return; // fully absorbed, no damage this time
+        }
+
+        float totalResistance = damageResistance;
+        if (hasAdaptiveArmor)
+        {
+            float missingHealthPct = 1f - (currentIntegrity / maxIntegrity);
+            totalResistance += adaptiveArmorMaxBonus * missingHealthPct;
+        }
+        totalResistance = Mathf.Clamp01(totalResistance);
+
+        float finalDamage = amount * (1f - totalResistance);
+
+        currentIntegrity = Mathf.Max(0f, currentIntegrity - finalDamage);
         OnIntegrityChanged?.Invoke(currentIntegrity, maxIntegrity);
 
         if (currentIntegrity <= 0f)
@@ -46,8 +110,13 @@ public class DomeHealth : MonoBehaviour
         OnIntegrityChanged?.Invoke(currentIntegrity, maxIntegrity);
     }
 
-    /// <summary>Called by UpgradeSystem when the player buys a max integrity upgrade.
-    /// Also heals by the same amount, so buying this feels immediately useful mid-run.</summary>
+    private void Die()
+    {
+        OnDomeDestroyed?.Invoke();
+    }
+
+    // --- Upgrade hooks, called by UpgradeSystem ---
+
     public void IncreaseMaxIntegrity(float amount)
     {
         if (amount <= 0f) return;
@@ -57,22 +126,12 @@ public class DomeHealth : MonoBehaviour
         OnIntegrityChanged?.Invoke(currentIntegrity, maxIntegrity);
     }
 
-    private void Die()
+    public void IncreaseDamageResistance(float percent) => damageResistance += percent;
+    public void EnableAutoRepair(float amountPerSecond) => regenPerSecond += amountPerSecond;
+    public void EnableEmergencyShield() => hasEmergencyShield = true;
+    public void EnableAdaptiveArmor(float maxBonusResistance)
     {
-        OnDomeDestroyed?.Invoke();
-        // Deliberately not disabling/destroying anything here yet —
-        // game-over handling belongs in a separate GameManager script later.
-    }
-
-    // --- Temporary test hook, safe to delete once EnemyAI exists ---
-    // Press Space in Play mode to simulate 10 damage, for testing before
-    // the enemy system is built.
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            TakeDamage(10f);
-            Debug.Log($"Dome integrity: {currentIntegrity}/{maxIntegrity}");
-        }
+        hasAdaptiveArmor = true;
+        adaptiveArmorMaxBonus = maxBonusResistance;
     }
 }

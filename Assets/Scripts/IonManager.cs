@@ -11,6 +11,7 @@ public class IonManager : MonoBehaviour
     [SerializeField] private int startingIons = 0;
 
     public int CurrentIons { get; private set; }
+    public int TotalIonsEarned { get; private set; } // lifetime total — never decreases, even when Spend() is called
 
     public event Action<int> OnIonsChanged;
 
@@ -24,6 +25,7 @@ public class IonManager : MonoBehaviour
         if (amount <= 0) return;
 
         CurrentIons += amount;
+        TotalIonsEarned += amount;
         OnIonsChanged?.Invoke(CurrentIons);
     }
 

@@ -12,12 +12,14 @@ public class Projectile : MonoBehaviour
     [SerializeField] private float lifetime = 3f; // safety cleanup if it never hits anything
 
     [Header("Combat")]
-    [SerializeField] private float damage = 10f;
+    [SerializeField] private float baseDamage = 10f;
 
     [Header("References")]
     [SerializeField] private PlayAreaBounds playAreaBounds; // optional — leave empty to disable the despawn check
 
     private Vector2 direction;
+    private float bonusDamageMultiplier = 1f;
+    private int remainingPierces = 0;
 
     private void Start()
     {
@@ -25,8 +27,18 @@ public class Projectile : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by TurretShoot right after Instantiate to set travel direction.
+    /// Called by TurretShoot right after Instantiate. damageMultiplier and pierceCount
+    /// come from purchased upgrades (Reinforced Barrel, Piercing Rounds, Railgun Core, etc.) —
+    /// TurretShoot tracks the current totals, this projectile just receives them.
     /// </summary>
+    public void Init(Vector2 dir, float damageMultiplier, int pierceCount)
+    {
+        direction = dir.normalized;
+        bonusDamageMultiplier = damageMultiplier;
+        remainingPierces = pierceCount;
+    }
+
+    /// <summary>Back-compat overload for direction-only firing (no upgrades applied).</summary>
     public void SetDirection(Vector2 dir)
     {
         direction = dir.normalized;
@@ -44,12 +56,18 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Detect enemies by component rather than a layer mask — simpler and
-        // avoids a silent no-op if a layer was never configured in the Inspector.
         var enemyHealth = other.GetComponent<EnemyHealth>();
         if (enemyHealth == null) return; // not an enemy (dome, other projectiles, etc.) — ignore
 
-        enemyHealth.TakeDamage(damage);
-        Destroy(gameObject);
+        enemyHealth.TakeDamage(baseDamage * bonusDamageMultiplier);
+
+        if (remainingPierces > 0)
+        {
+            remainingPierces--; // keep traveling, hit something else
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }

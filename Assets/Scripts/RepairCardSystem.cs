@@ -8,7 +8,7 @@ using UnityEngine;
 public class RepairCardSystem : MonoBehaviour
 {
     [Header("Repair Card Settings")]
-    [SerializeField] private int cardCost = 20;
+    [SerializeField] private int cardCost = 25;
     [SerializeField] private float repairAmount = 30f;
     [SerializeField] private KeyCode useCardKey = KeyCode.R;
 
@@ -18,6 +18,8 @@ public class RepairCardSystem : MonoBehaviour
 
     public int CardsOwned { get; private set; }
     public int CardCost => cardCost;
+
+    private float repairEfficiencyMultiplier = 1f;
 
     private void Update()
     {
@@ -53,9 +55,12 @@ public class RepairCardSystem : MonoBehaviour
         }
 
         CardsOwned--;
-        domeHealth.Repair(repairAmount);
-        Debug.Log($"Repair card used — healed {repairAmount}. Cards remaining: {CardsOwned}");
+        domeHealth.Repair(repairAmount * repairEfficiencyMultiplier);
+        Debug.Log($"Repair card used — healed {repairAmount * repairEfficiencyMultiplier}. Cards remaining: {CardsOwned}");
     }
+
+    /// <summary>Called by UpgradeSystem when the player buys Repair Efficiency.</summary>
+    public void IncreaseRepairEfficiency(float percent) => repairEfficiencyMultiplier *= (1f + percent);
 
     // Always-visible reminder that a card can be used, regardless of phase or shop screen.
     private void OnGUI()

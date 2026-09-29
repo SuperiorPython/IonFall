@@ -14,6 +14,11 @@ public class PlayAreaBounds : MonoBehaviour
     [SerializeField] private float minY = -12f;
     [SerializeField] private float maxY = 12f;
 
+    public float MinX => minX;
+    public float MaxX => maxX;
+    public float MinY => minY;
+    public float MaxY => maxY;
+
     public bool IsOutside(Vector2 pos)
     {
         return pos.x < minX || pos.x > maxX || pos.y < minY || pos.y > maxY;

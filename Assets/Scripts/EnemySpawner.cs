@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -10,17 +11,18 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawning")]
-    [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private List<GameObject> enemyPrefabs = new List<GameObject>(); // Flying / Tank / Runner variants
     [SerializeField] private float spawnInterval = 2f;
-    [SerializeField] private float spawnRadius = 12f; // distance from dome to spawn at
 
     [Header("Scaling (temporary hardcoded curve — tune during playtesting)")]
-    [SerializeField] private float intervalReductionPerNight = 0.15f;
+    [SerializeField] private float intervalReductionPerNight = 0.05f;
     [SerializeField] private float minSpawnInterval = 0.4f;
 
     [Header("References")]
     [SerializeField] private GameBounds gameBounds; // optional — leave empty to disable the ground clamp
+    [SerializeField] private PlayAreaBounds playAreaBounds; // spawns happen at this rectangle's border
     [SerializeField] private DayNightManager dayNightManager; // optional — used as a race-condition safety net
+    [SerializeField] private DifficultyCurve difficultyCurve; // optional — leave empty to spawn enemies at base stats
 
     private bool isSpawning;
     private float spawnTimer;
@@ -83,17 +85,71 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if (enemyPrefab == null || domeTransform == null) return;
+        if (enemyPrefabs.Count == 0 || domeTransform == null || playAreaBounds == null) return;
 
-        Vector2 spawnPos = (Vector2)domeTransform.position + Random.insideUnitCircle.normalized * spawnRadius;
+        GameObject chosenPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Count)];
+        var typeMarker = chosenPrefab.GetComponent<EnemyTypeMarker>();
+        bool isGroundType = typeMarker != null && typeMarker.movementType == EnemyMovementType.Ground;
 
-        // If this landed below ground level, reflect it back above the line
-        // rather than rejecting/resampling — keeps things simple and always succeeds.
-        if (gameBounds != null && spawnPos.y < gameBounds.GroundY)
+        Vector2 spawnPos = isGroundType ? GroundBorderSpawnPoint() : AnyBorderSpawnPoint();
+
+        var enemy = Instantiate(chosenPrefab, spawnPos, Quaternion.identity);
+
+        if (difficultyCurve != null)
         {
-            spawnPos.y = gameBounds.GroundY + (gameBounds.GroundY - spawnPos.y);
+            float healthMult = difficultyCurve.GetHealthMultiplier(currentNight);
+            float damageMult = difficultyCurve.GetDamageMultiplier(currentNight);
+            float speedMult = difficultyCurve.GetSpeedMultiplier(currentNight);
+
+            enemy.GetComponent<EnemyHealth>()?.ScaleHealth(healthMult);
+            enemy.GetComponent<EnemyAI>()?.ScaleDamage(damageMult);
+            enemy.GetComponent<EnemyAI>()?.ScaleSpeed(speedMult);
+        }
+    }
+
+    /// <summary>
+    /// Ground-type enemies (Tank, Runner) only make sense entering from the
+    /// left or right edge of the play area, walking in at ground height —
+    /// spawning one at the top/bottom border wouldn't read as "walking in".
+    /// </summary>
+    private Vector2 GroundBorderSpawnPoint()
+    {
+        float groundY = gameBounds != null ? gameBounds.GroundY : playAreaBounds.MinY;
+        float x = Random.value < 0.5f ? playAreaBounds.MinX : playAreaBounds.MaxX;
+        return new Vector2(x, groundY);
+    }
+
+    /// <summary>
+    /// Flying enemies can enter from any of the 4 edges of the play area border.
+    /// Still respects the ground-level floor as a safety net, in case the
+    /// bottom edge of the play area happens to sit below the ground line.
+    /// </summary>
+    private Vector2 AnyBorderSpawnPoint()
+    {
+        Vector2 point;
+        int side = Random.Range(0, 4);
+        switch (side)
+        {
+            case 0: // top
+                point = new Vector2(Random.Range(playAreaBounds.MinX, playAreaBounds.MaxX), playAreaBounds.MaxY);
+                break;
+            case 1: // bottom
+                point = new Vector2(Random.Range(playAreaBounds.MinX, playAreaBounds.MaxX), playAreaBounds.MinY);
+                break;
+            case 2: // left
+                point = new Vector2(playAreaBounds.MinX, Random.Range(playAreaBounds.MinY, playAreaBounds.MaxY));
+                break;
+            default: // right
+                point = new Vector2(playAreaBounds.MaxX, Random.Range(playAreaBounds.MinY, playAreaBounds.MaxY));
+                break;
         }
 
-        Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+        // Safety net — if this landed below ground level, reflect it back above the line.
+        if (gameBounds != null && point.y < gameBounds.GroundY)
+        {
+            point.y = gameBounds.GroundY + (gameBounds.GroundY - point.y);
+        }
+
+        return point;
     }
 }

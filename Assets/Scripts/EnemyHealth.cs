@@ -10,6 +10,12 @@ public class EnemyHealth : MonoBehaviour
 {
     [SerializeField] private float health = 30f;
 
+    /// <summary>Called by EnemySpawner right after Instantiate, based on the current night's difficulty.</summary>
+    public void ScaleHealth(float multiplier)
+    {
+        health *= multiplier;
+    }
+
     // Static — one event all enemies share, so ScoreManager can subscribe once
     // rather than needing a reference to every individual enemy instance.
     public static event System.Action OnAnyEnemyDeath;
