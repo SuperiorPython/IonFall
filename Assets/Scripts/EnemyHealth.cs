@@ -10,11 +10,16 @@ public class EnemyHealth : MonoBehaviour
 {
     [SerializeField] private float health = 30f;
 
+    // Static — one event all enemies share, so ScoreManager can subscribe once
+    // rather than needing a reference to every individual enemy instance.
+    public static event System.Action OnAnyEnemyDeath;
+
     public void TakeDamage(float amount)
     {
         health -= amount;
         if (health <= 0f)
         {
+            OnAnyEnemyDeath?.Invoke();
             Destroy(gameObject);
         }
     }

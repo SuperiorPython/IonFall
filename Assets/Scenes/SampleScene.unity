@@ -137,6 +137,9 @@ GameObject:
   - component: {fileID: 2712419}
   - component: {fileID: 2712420}
   - component: {fileID: 2712421}
+  - component: {fileID: 2712423}
+  - component: {fileID: 2712422}
+  - component: {fileID: 2712424}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -267,6 +270,48 @@ MonoBehaviour:
   ionManager: {fileID: 2712415}
   upgradeSystem: {fileID: 2712419}
   repairCardSystem: {fileID: 2712420}
+--- !u!114 &2712422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a5941d5012e92f438126b0e18d63a97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  domeHealth: {fileID: 1781554366}
+  scoreManager: {fileID: 2712423}
+  dayNightManager: {fileID: 1696620661}
+--- !u!114 &2712423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59757754e9826e242b863dbb637c4219, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2712424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2712414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80e7ee420ebf8914caee6bc2bd6a72f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dayNightManager: {fileID: 1696620661}
+  gameTitle: IONFALL
+  subtitle: Survive the fall.
 --- !u!1 &437752685
 GameObject:
   m_ObjectHideFlags: 0
@@ -693,7 +738,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d37c8890b5d931049b52e7a088b71e50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dayDuration: 20
+  dayDuration: 5
   nightDuration: 30
   startInDay: 1
   enemySpawner: {fileID: 2146036440}
@@ -835,7 +880,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2146036441}
   - component: {fileID: 2146036440}
-  - component: {fileID: 2146036442}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -877,22 +921,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2146036442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2146036439}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d37c8890b5d931049b52e7a088b71e50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dayDuration: 20
-  nightDuration: 30
-  startInDay: 1
-  enemySpawner: {fileID: 2146036440}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
