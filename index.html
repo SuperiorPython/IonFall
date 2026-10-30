@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IonFall</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="brand">IONFALL</div>
+      <div class="clock" id="clock">00:00</div>
+
+      <div class="stat">
+        <span class="label">RESOURCES</span>
+        <span class="value" id="res-value">0</span>
+        <span class="note" id="res-rate">+0.0/s</span>
+      </div>
+      <div class="stat">
+        <span class="label">ION</span>
+        <span class="value ion" id="ion-value">0</span>
+        <span class="note" id="ion-note">hold M</span>
+      </div>
+      <div class="stat weapon">
+        <span class="label">SUPERWEAPON</span>
+        <span class="value small" id="weapon-status">OFFLINE</span>
+        <div class="bar"><div id="weapon-fill"></div></div>
+      </div>
+
+      <div class="spacer"></div>
+      <button id="btn-central">Central upgrades</button>
+      <button id="btn-pause">Pause</button>
+    </header>
+
+    <main id="stage"><canvas id="game"></canvas></main>
+
+    <aside id="sidebar">
+      <section id="view-overview">
+        <h2>Your territory</h2>
+        <p class="dim">Side A, blue</p>
+        <ul id="overview-list"></ul>
+        <h3>Ion section</h3>
+        <div class="row" id="overview-ion"></div>
+        <p class="hint">Click a section on the map, or a row above, to open it.</p>
+      </section>
+
+      <section id="view-section" class="hidden">
+        <button id="btn-back" class="link">&larr; Overview</button>
+        <h2 id="sec-title"></h2>
+        <div id="sec-owner" class="badge"></div>
+        <dl class="stats">
+          <dt>Planets</dt><dd id="sec-planets"></dd>
+          <dt>Income</dt><dd id="sec-income"></dd>
+          <dt>Route safety</dt><dd id="sec-safety"></dd>
+        </dl>
+        <div id="sec-tabs" class="tabs">
+          <button data-tab="build">Build ships</button>
+          <button data-tab="upgrades">Upgrades</button>
+        </div>
+        <div id="sec-tabbody" class="tabbody"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div id="central" class="overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Central upgrades</h2>
+        <button id="central-close" class="link">Close (Esc)</button>
+      </div>
+      <p class="dim">Global upgrades that apply everywhere, not tied to one section.</p>
+      <div class="placeholder">Placeholder. The upgrade list and costs come in a later piece, once the design is settled.</div>
+    </div>
+  </div>
+
+  <script src="galaxy.js"></script>
+  <script src="state.js"></script>
+  <script src="ui.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
