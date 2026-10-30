@@ -13,7 +13,8 @@
   const COLORS = {
     A: '#4aa3ff',    // side A (blue)
     B: '#ff6a55',    // side B (red)
-    N: '#7ff0ff',    // ion / neutral (cyan)
+    N: '#7ff0ff',    // ion (cyan)
+    U: '#8f9bb8',    // unclaimed land (grey-blue)
     V: '#b58cff',    // nebula (violet)
     lane: 'rgba(255, 255, 255, 0.5)',
     text: '#c9d4e8',
@@ -48,16 +49,16 @@
   const dustRng = mulberry32((seed ^ 0x5bd1e995) >>> 0);
   const gauss = () => dustRng() + dustRng() + dustRng() + dustRng() - 2;
   const dust = [];
-  for (let i = 0; i < 3600; i++) {
+  for (let i = 0; i < Math.round(2500 * WORLD_SCALE * WORLD_SCALE); i++) {
     const arm = galaxy.arms[i % 2];
     const t = Math.pow(dustRng(), 0.8) * 1.08 + 0.02;
     const p = armPoint(arm, t);
     const q = armPoint(arm, t + 0.02);
     const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
-    const spread = (28 + 70 * t) * gauss();
+    const spread = (28 + 70 * t) * WORLD_SCALE * gauss();
     dust.push({
-      x: p.x - ((q.y - p.y) / len) * spread + gauss() * 14,
-      y: p.y + ((q.x - p.x) / len) * spread + gauss() * 14,
+      x: p.x - ((q.y - p.y) / len) * spread + gauss() * 14 * WORLD_SCALE,
+      y: p.y + ((q.x - p.x) / len) * spread + gauss() * 14 * WORLD_SCALE,
       a: 0.08 + dustRng() * 0.3,
       warm: t < 0.45 ? 1 : 0,
       s: dustRng() < 0.12 ? 2 : 1,
@@ -92,7 +93,7 @@
 
   function targetFor(section) {
     if (!section) return { x: WORLD_W / 2, y: WORLD_H / 2, zoom: 1 };
-    const wanted = (ZOOM_FILL * Math.min(view.w, view.h)) / (2 * section.r);
+    const wanted = (ZOOM_FILL * Math.min(view.w, view.h)) / (2 * (section.r + 56));
     return { x: section.x, y: section.y, zoom: Math.max(1, wanted / fitScale()) };
   }
 
@@ -125,6 +126,48 @@
       if (!zoomedId) focusId = null;
       draw();
     }
+  }
+
+  // ---------- free zoom and pan ----------
+  const MAX_ZOOM = 16;
+
+  // Keep the view over the map: it may slide a little past the edge, never lose the map entirely.
+  function keepOnMap() {
+    updateView();
+    const halfW = view.w / (2 * view.scale);
+    const halfH = view.h / (2 * view.scale);
+    const slack = 80;
+    cam.x = halfW * 2 >= WORLD_W ? WORLD_W / 2 : clamp(cam.x, halfW - slack, WORLD_W - halfW + slack);
+    cam.y = halfH * 2 >= WORLD_H ? WORLD_H / 2 : clamp(cam.y, halfH - slack, WORLD_H - halfH + slack);
+    updateView();
+  }
+
+  // Zoom by `factor`, keeping the world point under screen position (sx, sy) where it is.
+  function zoomBy(factor, sx, sy) {
+    if (anim) { anim = null; if (!zoomedId) focusId = null; }
+    updateView();
+    const wx = (sx - view.ox) / view.scale;
+    const wy = (sy - view.oy) / view.scale;
+    cam.zoom = clamp(cam.zoom * factor, 1, MAX_ZOOM);
+    updateView();
+    cam.x = wx - (sx - view.w / 2) / view.scale;
+    cam.y = wy - (sy - view.h / 2) / view.scale;
+    keepOnMap();
+    // zooming a long way out of a section leaves it
+    if (zoomedId && cam.zoom < 0.55 * targetFor(byId[zoomedId]).zoom) {
+      zoomedId = focusId = null;
+      hoverPlanet = null;
+      if (selectedPlanet) { selectedPlanet = null; ui.showPlanet(null, null); }
+    }
+    draw();
+  }
+
+  function panBy(dxScreen, dySreen) {
+    if (anim) { anim = null; if (!zoomedId) focusId = null; }
+    cam.x -= dxScreen / view.scale;
+    cam.y -= dySreen / view.scale;
+    keepOnMap();
+    draw();
   }
 
   function zoomInto(section) {
@@ -204,24 +247,24 @@
     ctx.globalAlpha = fade;
     ctx.translate(WORLD_W / 2, WORLD_H / 2);
     ctx.scale(1, ARM_SQUASH);
-    const disc = ctx.createRadialGradient(0, 0, 0, 0, 0, 820);
+    const disc = ctx.createRadialGradient(0, 0, 0, 0, 0, ARM_RX * 1.14);
     disc.addColorStop(0, 'rgba(70, 95, 170, 0.20)');
     disc.addColorStop(0.55, 'rgba(40, 60, 120, 0.09)');
     disc.addColorStop(1, 'rgba(20, 30, 70, 0)');
     ctx.fillStyle = disc;
     ctx.beginPath();
-    ctx.arc(0, 0, 820, 0, Math.PI * 2);
+    ctx.arc(0, 0, ARM_RX * 1.14, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
     ctx.globalAlpha = fade;
-    const glow = ctx.createRadialGradient(core.x, core.y, 0, core.x, core.y, 330);
+    const glow = ctx.createRadialGradient(core.x, core.y, 0, core.x, core.y, 480);
     glow.addColorStop(0, 'rgba(255, 214, 150, 0.16)');
     glow.addColorStop(0.4, 'rgba(255, 190, 130, 0.06)');
     glow.addColorStop(1, 'rgba(255, 190, 130, 0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(core.x, core.y, 330, 0, Math.PI * 2);
+    ctx.arc(core.x, core.y, 480, 0, Math.PI * 2);
     ctx.fill();
 
     const size = px(1.4);
@@ -233,65 +276,197 @@
     ctx.globalAlpha = 1;
   }
 
+  // Fleet markers: the biggest ship type in the fleet, with a count badge. Only your own fleets are drawn
+  // (no visibility yet, so enemy fleets stay hidden).
+  // A row of stationed fleets goes on whichever side of its section has the most free room, never above it (the label is there).
+  function markerAnchor(section) {
+    // pick the side of the core circle with the most land beyond it (never above: the label is there)
+    let best = null;
+    for (const a of [90, 45, 135, 0, 180]) {
+      const rad = (a * Math.PI) / 180;
+      const reach = rayExit(section, Math.cos(rad), Math.sin(rad));
+      const dist = Math.min(reach - 26, section.r - 2);
+      const ax = section.x + Math.cos(rad) * dist;
+      const ay = section.y + Math.sin(rad) * dist;
+      let room = reach;
+      if (ax < 40 || ax > WORLD_W - 40 || ay > WORLD_H - 20) room = -1;
+      if (!best || room > best.room + 12) best = { room, ax, ay, rad }; // earlier choices win near-ties (bottom first)
+    }
+    // the row runs along the edge of the core circle, at right angles to the direction away from the center
+    return { ax: best.ax, ay: best.ay, tx: -Math.sin(best.rad), ty: Math.cos(best.rad) };
+  }
+
+  function drawMarker(fleet, x, y, angle) {
+    drawShip(ctx, fleetLeader(fleet), x, y, px(11), angle, COLORS[state.player]);
+    const bx = x + px(20);
+    const by = y - px(12);
+    ctx.beginPath();
+    ctx.arc(bx, by, px(9), 0, Math.PI * 2);
+    ctx.fillStyle = '#0f1626';
+    ctx.fill();
+    ctx.lineWidth = px(1.2);
+    ctx.strokeStyle = COLORS[state.player];
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = px(11) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(fleetSize(fleet)), bx, by + px(0.5));
+  }
+
+  function drawFleets() {
+    const fleets = state.sides[state.player].fleets.filter((f) => fleetSize(f) > 0);
+    if (!fleets.length) return;
+    ctx.save();
+
+    const bySection = {};
+    for (const f of fleets) if (!f.leg && f.at) (bySection[f.at] = bySection[f.at] || []).push(f);
+    for (const id in bySection) {
+      const list = bySection[id];
+      const anchor = markerAnchor(byId[id]);
+      ctx.globalAlpha = focusId && id !== focusId ? 1 - 0.8 * dimAmount() : 1;
+      list.forEach((f, i) => {
+        const off = (i - (list.length - 1) / 2) * px(56);
+        drawMarker(f, anchor.ax + anchor.tx * off, anchor.ay + anchor.ty * off, 0);
+      });
+    }
+
+    ctx.globalAlpha = focusId ? 1 - 0.8 * dimAmount() : 1;
+    for (const f of fleets) {
+      if (!f.leg) continue;
+      const p = fleetPosition(state, f);
+      drawMarker(f, p.x, p.y, p.angle);
+    }
+    ctx.restore();
+  }
+
+  // A lane joins the core circles of two territories (where the planets are), over the land between them.
   function drawLanes() {
     ctx.globalAlpha = 1 - 0.8 * dimAmount();
     ctx.lineWidth = px(2);
     for (const lane of galaxy.lanes) {
       const a = byId[lane.a];
       const b = byId[lane.b];
-      ctx.strokeStyle = a.nebula || b.nebula ? 'rgba(181, 140, 255, 0.55)' : COLORS.lane;
+      ctx.strokeStyle = a.nebula || b.nebula ? 'rgba(181, 140, 255, 0.7)' : COLORS.lane;
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const len = Math.hypot(dx, dy);
       const ux = dx / len;
       const uy = dy / len;
+      const x1 = a.x + ux * a.r * 0.92;
+      const y1 = a.y + uy * a.r * 0.92;
+      const x2 = b.x - ux * b.r * 0.92;
+      const y2 = b.y - uy * b.r * 0.92;
       ctx.setLineDash(lane.cross ? [px(10), px(8)] : []);
       ctx.beginPath();
-      ctx.moveTo(a.x + ux * (a.r + 6), a.y + uy * (a.r + 6));
-      ctx.lineTo(b.x - ux * (b.r + 6), b.y - uy * (b.r + 6));
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = ctx.strokeStyle;
+      for (const [gx, gy] of [[x1, y1], [x2, y2]]) {
+        ctx.beginPath();
+        ctx.arc(gx, gy, px(3.5), 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-    ctx.setLineDash([]);
     ctx.globalAlpha = 1;
   }
 
-  function drawSection(s) {
+  function dimFor(s) {
+    return focusId && s.id !== focusId ? 1 - 0.8 * dimAmount() : 1;
+  }
+
+  // Pass 1: the land itself, tinted by owner.
+  function drawLand(s) {
     const owner = state.sections[s.id].owner;
-    const color = sideColor(owner || (s.nebula ? 'V' : 'N'));
-    const faded = focusId && s.id !== focusId;
-    const isHover = hover === s;
-    const isSelected = selected === s;
-
-    ctx.globalAlpha = faded ? 1 - 0.8 * dimAmount() : 1;
-
-    // soft tinted fill (nebulas always stay violet, so they read as a separate kind of section)
+    const color = sideColor(owner || (s.nebula ? 'V' : s.ion ? 'N' : 'U'));
+    const lit = hover === s || selected === s;
+    ctx.globalAlpha = dimFor(s);
     const fill = s.nebula ? COLORS.V : color;
-    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
-    g.addColorStop(0, fill + (isHover || isSelected ? '33' : '1f'));
-    g.addColorStop(1, fill + '08');
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r + 90);
+    g.addColorStop(0, fill + (lit ? '55' : '36'));
+    g.addColorStop(1, fill + (lit ? '30' : '16'));
     ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    tracePiece(s);
     ctx.fill();
-    if (s.nebula) drawNebulaCloud(s, isHover || isSelected);
+    if (s.nebula) {
+      ctx.save();
+      tracePiece(s);
+      ctx.clip();
+      drawNebulaCloud(s, lit);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
 
-    // outline: white when selected, bright when hovered. Nebulas are dashed and take the owner's color when held.
-    ctx.lineWidth = px(isSelected ? 3.5 : isHover ? 3 : 1.5);
-    ctx.strokeStyle = isSelected ? '#ffffff' : color + (isHover ? 'ff' : '88');
-    ctx.setLineDash(s.nebula && !isSelected ? [px(5), px(5)] : []);
+  // Pass 2: borders, one thin line for every territory (shared borders are drawn by both neighbours, same points).
+  function drawBorders() {
+    ctx.lineJoin = 'round';
+    for (const s of galaxy.sections) {
+      ctx.globalAlpha = dimFor(s);
+      ctx.lineWidth = px(1.3);
+      ctx.strokeStyle = 'rgba(200, 215, 255, 0.34)';
+      tracePiece(s);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Pass 3: the hovered or selected territory gets a bright border, in its owner's color.
+  function drawHighlight(s) {
+    const owner = state.sections[s.id].owner;
+    const color = sideColor(owner || (s.nebula ? 'V' : s.ion ? 'N' : 'U'));
+    const isSelected = selected === s;
+    ctx.globalAlpha = dimFor(s);
+    ctx.lineWidth = px(isSelected ? 3.5 : 3);
+    ctx.strokeStyle = isSelected ? '#ffffff' : color;
+    tracePiece(s);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
 
-    // label above the section
-    ctx.fillStyle = COLORS.text;
-    ctx.font = px(14) + 'px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    const label = s.ion ? 'M  ION SECTION' : s.nebula ? s.id + '  NEBULA' : s.home ? s.id + '  HOME' : s.id;
-    ctx.fillText(label, s.x, s.y - s.r - px(8));
+  // Held territories also get a solid border in the owner's color so who holds what reads at a glance.
+  function drawOwnerBorder(s) {
+    const owner = state.sections[s.id].owner;
+    if (!owner) return;
+    ctx.globalAlpha = dimFor(s);
+    ctx.lineWidth = px(2.2);
+    ctx.strokeStyle = sideColor(owner) + 'aa';
+    tracePiece(s);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
 
+  function drawPlanetsOf(s) {
+    const owner = state.sections[s.id].owner;
+    const color = sideColor(owner || (s.nebula ? 'V' : s.ion ? 'N' : 'U'));
+    ctx.globalAlpha = dimFor(s);
     for (const p of s.planets) drawPlanet(p, s, color);
     ctx.globalAlpha = 1;
+  }
+
+  // The label sits in the top strip of the section's core circle (planets keep out of that strip).
+  function drawSectionLabel(s) {
+    ctx.globalAlpha = dimFor(s);
+    const label = s.ion ? 'M  ION SECTION' : s.nebula ? (cam.zoom < 2.5 ? s.id : s.id + '  NEBULA') : s.home ? s.id + '  HOME' : s.id;
+    ctx.font = px(14) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(label).width + px(14);
+    const h = px(20);
+    const cy = s.y - s.r + 18;
+    ctx.fillStyle = 'rgba(8, 12, 24, 0.72)';
+    ctx.fillRect(s.x - w / 2, cy - h / 2, w, h);
+    ctx.fillStyle = COLORS.text;
+    ctx.fillText(label, s.x, cy + px(0.5));
+    ctx.globalAlpha = 1;
+  }
+
+  function tracePiece(s) {
+    ctx.beginPath();
+    s.shape.forEach((c, i) => (i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y)));
+    ctx.closePath();
   }
 
   // A nebula is a few overlapping soft violet blobs. This is only for looks: there are no planets inside.
@@ -321,7 +496,8 @@
       ctx.fill();
     }
 
-    ctx.fillStyle = p.ion ? COLORS.N : color;
+    const planetOwner = state.planets[p.id].owner;
+    ctx.fillStyle = planetOwner ? sideColor(planetOwner) : COLORS.N;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fill();
@@ -348,9 +524,20 @@
       ctx.stroke();
     }
 
-    // Names fade in as the camera closes in on the section.
-    if (s.id === focusId) {
-      const alpha = clamp((cam.zoom - 1.6) / 1.2, 0, 1);
+    // Capture progress: a ring that fills clockwise while one of your fleets is capturing this planet.
+    const capturing = state.sides[state.player].fleets.filter((f) => !f.leg && f.at === s.id && f.order && f.order.type === 'capture' && f.order.planetId === p.id && f.progress > 0);
+    if (capturing.length) {
+      const frac = Math.min(1, Math.max(...capturing.map((f) => f.progress)) / CAPTURE_TIME);
+      ctx.lineWidth = px(3);
+      ctx.strokeStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r + px(p.home ? 17 : 10), -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Names fade in as the camera closes in on the section (or on any section, when you zoom in by hand).
+    if (s.id === focusId || !focusId) {
+      const alpha = s.id === focusId ? clamp((cam.zoom - 1.6) / 1.2, 0, 1) : clamp((cam.zoom - 4.5) / 1.5, 0, 1);
       if (alpha > 0) {
         const prev = ctx.globalAlpha;
         ctx.globalAlpha = prev * alpha;
@@ -358,8 +545,8 @@
         ctx.fillStyle = COLORS.text;
         ctx.font = px(13) + 'px monospace';
         ctx.fillText(p.id, p.x, p.y + p.r + px(p.home ? 26 : 18));
-        const owner = state.sections[s.id].owner;
-        const sub = owner === state.player ? (s.ion ? '' : '+' + planetIncome(state, s).toFixed(1) + '/s') : p.ion ? 'ion' : '';
+        const owner = state.planets[p.id].owner;
+        const sub = owner === state.player ? (s.ion ? '' : '+' + planetIncome(state, s, p).toFixed(1) + '/s') : p.ion ? 'ion' : '';
         if (sub) {
           ctx.fillStyle = COLORS.dim;
           ctx.font = px(12) + 'px monospace';
@@ -404,8 +591,15 @@
       view.dpr * view.ox, view.dpr * view.oy
     );
     drawBackdrop();
+    for (const s of galaxy.sections) drawLand(s);
+    drawBorders();
+    for (const s of galaxy.sections) drawOwnerBorder(s);
     drawLanes();
-    for (const s of galaxy.sections) drawSection(s);
+    for (const s of galaxy.sections) if (s !== hover && s !== selected) drawPlanetsOf(s);
+    for (const s of [hover, selected]) if (s) drawHighlight(s);
+    for (const s of [hover, selected]) if (s) drawPlanetsOf(s);
+    for (const s of galaxy.sections) drawSectionLabel(s);
+    drawFleets();
 
     drawHoverInfo();
   }
@@ -423,7 +617,7 @@
   function sectionAt(e) {
     const w = worldPoint(e);
     for (const s of galaxy.sections) {
-      if (Math.hypot(w.x - s.x, w.y - s.y) <= s.r) return s;
+      if (pointInPolygon(s.shape, w.x, w.y)) return s;
     }
     return null;
   }
@@ -440,7 +634,45 @@
     canvas.style.cursor = (zoomedId ? hoverPlanet : hover) ? 'pointer' : 'default';
   }
 
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const unit = e.deltaMode === 1 ? 16 : 1;
+    zoomBy(Math.exp(-e.deltaY * unit * 0.0016), e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  // Dragging pans the map. A drag that moved more than a few pixels is not a click.
+  let drag = null;
+  let dragged = false;
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    dragged = false;
+    drag = { x: e.clientX, y: e.clientY, moved: false };
+  });
+  window.addEventListener('mouseup', () => {
+    if (drag) dragged = drag.moved;
+    drag = null;
+    canvas.style.cursor = (zoomedId ? hoverPlanet : hover) ? 'pointer' : 'default';
+  });
+
+  const zoomButton = (id, factor) => document.getElementById(id).addEventListener('click', () => zoomBy(factor, view.w / 2, view.h / 2));
+  zoomButton('zin', 1.5);
+  zoomButton('zout', 1 / 1.5);
+  document.getElementById('zfit').addEventListener('click', () => select(null));
+
   canvas.addEventListener('mousemove', (e) => {
+    if (drag) {
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (drag.moved || Math.hypot(dx, dy) > 5) {
+        drag.moved = true;
+        drag.x = e.clientX;
+        drag.y = e.clientY;
+        canvas.style.cursor = 'grabbing';
+        panBy(dx, dy);
+        return;
+      }
+    }
     if (anim) return;
     if (zoomedId) {
       const p = planetAt(e);
@@ -470,6 +702,7 @@
 
   // Clicking empty space always steps back one level: planet -> section -> galaxy.
   canvas.addEventListener('click', (e) => {
+    if (dragged) { dragged = false; return; } // that was a pan, not a click
     if (anim) return; // ignore clicks while the camera is moving
     if (zoomedId) {
       const p = planetAt(e);
@@ -483,16 +716,27 @@
   });
 
   // ---------- game loop ----------
-  // Tick the rules about 10 times a second and refresh the dashboard.
+  // Tick the rules 20 times a second and refresh the dashboard.
   let last = performance.now();
+  let mapSig = '';
   setInterval(() => {
     const now = performance.now();
     const dt = Math.min((now - last) / 1000, 0.25); // cap so a background tab doesn't jump ahead
     last = now;
     tickState(state, galaxy, dt);
     ui.update();
-    if (zoomedId) draw(); // keeps the per-planet income labels current
-  }, 100);
+    // Redraw when something on the map changed, while a fleet is moving or capturing, and every tick while zoomed in
+    // (keeps the per-planet income labels current).
+    const mine = state.sides[state.player].fleets;
+    const busy = mine.some((f) => f.leg || (f.order && f.progress > 0));
+    const sig = JSON.stringify([
+      mine.map((f) => [f.id, f.at, fleetSize(f), fleetLeader(f)]),
+      Object.values(state.planets).map((p) => p.owner || '-').join(''),
+      Object.values(state.sections).map((s) => s.owner || '-').join(''),
+    ]);
+    if (zoomedId || busy || sig !== mapSig) draw();
+    mapSig = sig;
+  }, 50);
 
   new ResizeObserver(resize).observe(stage);
   ui.update();
