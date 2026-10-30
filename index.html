@@ -22,6 +22,11 @@
         <span class="value ion" id="ion-value">0</span>
         <span class="note" id="ion-note">hold M</span>
       </div>
+      <div class="stat">
+        <span class="label">RESEARCH</span>
+        <span class="value rp" id="rp-value">0.0</span>
+        <span class="note" id="rp-rate">+0.0/s</span>
+      </div>
       <div class="stat weapon">
         <span class="label">SUPERWEAPON</span>
         <span class="value small" id="weapon-status">OFFLINE</span>
@@ -42,7 +47,10 @@
         <ul id="overview-list"></ul>
         <h3>Ion section</h3>
         <div class="row" id="overview-ion"></div>
-        <p class="hint">Click a section on the map, or a row above, to open it.</p>
+        <h3>Nebulae</h3>
+        <ul id="overview-nebulae"></ul>
+        <p class="hint">Click a section on the map, or a row above, to zoom in. Click empty space or press Esc to go back.</p>
+        <p class="hint" id="seed-note"></p>
       </section>
 
       <section id="view-section" class="hidden">
@@ -50,10 +58,17 @@
         <h2 id="sec-title"></h2>
         <div id="sec-owner" class="badge"></div>
         <dl class="stats">
-          <dt>Planets</dt><dd id="sec-planets"></dd>
-          <dt>Income</dt><dd id="sec-income"></dd>
+          <dt id="sec-planets-label">Planets</dt><dd id="sec-planets"></dd>
+          <dt id="sec-income-label">Income</dt><dd id="sec-income"></dd>
           <dt>Route safety</dt><dd id="sec-safety"></dd>
         </dl>
+        <div id="planet-card" class="card hidden">
+          <div class="card-title" id="pc-name"></div>
+          <dl class="stats">
+            <dt>Type</dt><dd id="pc-kind"></dd>
+            <dt id="pc-income-label">Income</dt><dd id="pc-income"></dd>
+          </dl>
+        </div>
         <div id="sec-tabs" class="tabs">
           <button data-tab="build">Build ships</button>
           <button data-tab="upgrades">Upgrades</button>
